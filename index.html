@@ -18,7 +18,7 @@
    IDEA: Hantelscheiben – Tag A ist die rote 25er, Tag B die blaue 20er; jede Einheit ist eine Scheibe auf der Stange
    PICTURE: die Eingabemaske selbst, mit der Scheibe des heutigen Tages im Kopf
    COLOUR and TYPE: Weiß oder Nachtschwarz, Scheibenrot und Scheibenblau als Tagesfarbe; Systemschrift des Geräts, keine externen Schriften
-   LAYOUT: eine Spalte bis 640px, Tabs unten im Daumenbereich, Pausentimer darüber */
+   LAYOUT: eine Spalte bis 640px, Tabs unten im Daumenbereich, Pausentimer oben (bleibt über Tastatur und Dialogen sichtbar) */
 :root{color-scheme:light dark;
 --bg:light-dark(#ffffff,#0f1012);--card:light-dark(#f4f4f2,#1a1b1d);--card2:light-dark(#e9e9e5,#26272a);
 --ink:light-dark(#121315,#eeeeec);--ink2:light-dark(#4e4f52,#c3c2bc);--mut:light-dark(#76777a,#8f9093);
@@ -35,7 +35,8 @@ body.tagB{--acc:var(--B)}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.app{max-width:640px;margin:0 auto;padding:calc(8px + env(safe-area-inset-top)) 16px calc(150px + env(safe-area-inset-bottom))}
+.app{max-width:640px;margin:0 auto;padding:calc(8px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom))}
+body.hasTimer .app{padding-top:calc(var(--th,0px) + 8px)}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 10px}
 .brand{font:700 20px/1 var(--cond);letter-spacing:.2px}
 .sync{text-decoration:none;min-height:32px;font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:6px;white-space:nowrap}
@@ -69,8 +70,8 @@ h1{font-size:clamp(32px,8vw,44px)}h2{font-size:24px;margin:26px 0 10px}
 .seth{padding:4px 0 0;font-size:13px;color:var(--mut)}.seth span{padding-left:12px}
 .set .no{font:600 16px var(--cond);color:var(--mut);text-align:center}
 .fld{position:relative;display:block}
-.fld input{width:100%;height:48px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:0 12px;font:600 21px var(--cond);font-variant-numeric:tabular-nums}
-.fld input::placeholder{color:var(--mut);font-weight:500}
+.fld input{width:100%;height:48px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:0 12px;font:600 21px var(--cond);font-variant-numeric:tabular-nums;scroll-margin-top:calc(var(--th,0px) + 16px)}
+.fld input::placeholder{color:var(--mut);font-weight:500;opacity:.75}
 .x{color:var(--mut);text-align:center}
 .chk{width:48px;height:48px;border-radius:12px;border:2px solid var(--line);background:var(--bg);display:grid;place-items:center;color:var(--mut)}
 .set.done .chk{background:var(--acc);border-color:var(--acc);color:#fff}
@@ -111,14 +112,25 @@ nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(
 nav a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 10px;min-height:56px;color:var(--mut);text-decoration:none;font-size:13px;font-weight:600}
 nav a svg{width:24px;height:24px}
 nav a[aria-current=page]{color:var(--acc)}
-.timer{position:fixed;left:0;right:0;padding:0 10px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:19;pointer-events:none}
-.timer .in{pointer-events:auto;max-width:608px;margin:0 auto 8px;background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden}
+.timer{position:fixed;left:0;right:0;top:0;padding:calc(6px + env(safe-area-inset-top)) 10px 0;z-index:45;pointer-events:none;will-change:transform}
+.timer .in{pointer-events:auto;max-width:608px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 12px 9px 16px;position:relative;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.22)}
 .timer .bar{position:absolute;left:0;top:0;height:3px;background:var(--acc)}
-.tc{display:flex;flex-direction:column;line-height:1.1}.tc small{font-size:12px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tc b{font:700 26px/1.05 var(--cond);font-variant-numeric:tabular-nums}.tc.rest{flex:1;min-width:0;padding-left:12px;border-left:1px solid rgba(127,127,127,.4)}
-.timer.norest .rest,.timer.norest button{display:none}.timer.norest .in{padding:8px 16px}
-.timer button{background:none;border:1px solid currentColor;border-radius:10px;color:inherit;min-height:40px;padding:0 10px;font-size:14px;opacity:.9}
+.tr1{display:flex;align-items:center;gap:10px}
+.tc{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.1}.tc small{font-size:13px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc b{font:700 30px/1.05 var(--cond);font-variant-numeric:tabular-nums}
+.tnext{font-size:15px;font-weight:600;line-height:1.3;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tstat{font-size:13px;opacity:.72;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.timer.norest .tr1,.timer.norest .tnext{display:none}.timer.norest .in{padding:8px 16px}.timer.norest .tstat{margin:0;opacity:.9}
+.timer button{flex:none;background:none;border:1px solid currentColor;border-radius:10px;color:inherit;min-height:44px;padding:0 12px;font-size:15px;opacity:.9}
 .timer.over .in{background:var(--acc);color:#fff}
+/* Pausenende: ganzer Bildschirm leuchtet kurz auf */
+#flash{position:fixed;inset:0;z-index:60;display:grid;place-items:center;text-align:center;padding:24px;background:#fff;color:var(--acc);opacity:0}
+#flash[hidden]{display:none}
+#flash.on{animation:flash 3s ease-out forwards}
+#flash b{display:block;font:700 44px/1.05 var(--cond)}#flash span{display:block;margin-top:10px;font:600 19px/1.3 var(--sans);color:#121315}
+@keyframes flash{0%,28%,56%{opacity:1}14%,42%{opacity:.55}80%{opacity:1}100%{opacity:0}}
+body.hasTimer #edit{top:var(--th,0px)}
+body.hasTimer .sheet{max-height:calc(100vh - var(--th,0px) - 12px)}
 /* Verlauf */
 .wk{font:700 15px var(--cond);color:var(--mut);margin:22px 0 6px;letter-spacing:.3px}
 .hs{background:var(--card);border-radius:14px;margin-top:8px}
@@ -202,9 +214,11 @@ input[type=date]{height:48px;width:100%;border:1px solid var(--line);border-radi
 </div>
 <div id="edit" hidden><div class="app"><div class="editbar"><strong id="editTitle">Einheit bearbeiten</strong><button class="ghost" id="editClose">Abbrechen</button></div><div id="editView" data-mode="edit"></div></div></div>
 <div class="timer norest" id="timer" hidden><div class="in"><span class="bar" id="tbar"></span>
-  <div class="tc"><small>Gesamt</small><b id="ttot">0:00</b></div>
-  <div class="tc rest"><small id="tl">Pause</small><b id="tt">0:00</b></div>
-  <button id="tplus">+30 s</button><button id="tstop">Stopp</button></div></div>
+  <div class="tr1"><div class="tc"><small id="tl">Pause</small><b id="tt">0:00</b></div>
+  <button id="tplus">+30 s</button><button id="tstop">Stopp</button></div>
+  <div class="tnext" id="tnext"></div>
+  <div class="tstat" id="tstat"></div></div></div>
+<div id="flash" hidden></div>
 <nav aria-label="Bereiche"><div class="in">
   <a href="#training" data-tab="training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg>Training</a>
   <a href="#verlauf" data-tab="verlauf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Verlauf</a>
@@ -219,28 +233,30 @@ const PLAN = {
   A: { title: 'Drücken + Kniebeuge', ex: [
     { name: 'Kniebeuge', sets: 4, min: 5, max: 5, inc: 2.5, rest: 180, main: true, hint: 'Mindestens parallel tief.' },
     { name: 'Bankdrücken (KH)', sets: 4, min: 6, max: 8, inc: 2, rest: 180, main: true, hint: 'Gewicht je Hantel.' },
+    { name: 'Beinpresse', sets: 2, min: 10, max: 12, inc: 5, rest: 120, hint: 'Bewusst zwischen Bank- und Schulterdrücken, als Pause für Schultern und Trizeps.' },
     { name: 'Schulterdrücken stehend', sets: 3, min: 6, max: 8, inc: 2.5, rest: 150, main: true, hint: 'Langhantel. Stockt es, kleinere Sprünge (+1 kg).' },
-    { name: 'Dips', sets: 3, min: 8, max: 12, inc: 2.5, rest: 120, bw: true, hint: 'Zusatzgewicht, 0 = Körpergewicht.' },
-    { name: 'Beinpresse', sets: 3, min: 10, max: 12, inc: 5, rest: 120, hint: '' },
-    { name: 'Wadenheben', sets: 3, min: 10, max: 15, inc: 5, rest: 60, hint: 'Unten kurz halten, oben voll hochdrücken.' }
+    { name: 'Dips', sets: 2, min: 8, max: 12, inc: 2.5, rest: 120, bw: true, hint: 'Zusatzgewicht, 0 = Körpergewicht.' }
   ]},
   B: { title: 'Ziehen + Kreuzheben', ex: [
     { name: 'Kreuzheben', sets: 3, min: 5, max: 5, inc: 2.5, rest: 210, main: true, hint: 'Geht es anfangs sehr leicht, sind +5 kg okay.' },
     { name: 'Klimmzüge', sets: 4, min: 6, max: 8, inc: 2.5, rest: 150, bw: true, hint: 'Zusatzgewicht, 0 = Körpergewicht. Keine 6 Wdh? Band oder Maschine.' },
     { name: 'Langhantelrudern', sets: 3, min: 8, max: 10, inc: 2.5, rest: 120, hint: 'Oberkörper ca. 45° vorgebeugt, kein Schwung.' },
     { name: 'Beinbeuger-Curls', sets: 3, min: 10, max: 12, inc: 2.5, rest: 90, hint: 'Maschine.' },
-    { name: 'Seitheben', sets: 3, min: 12, max: 15, inc: 2, rest: 60, hint: 'Gewicht je Hantel. Im Wechsel mit Face Pulls und SZ-Curls.' },
+    { name: 'Seitheben', sets: 3, min: 12, max: 15, inc: 2, rest: 60, hint: 'Gewicht je Hantel. Im Wechsel mit Face Pulls, SZ-Curls und Butterfly.' },
     { name: 'Face Pulls', sets: 3, min: 12, max: 15, inc: 2.5, rest: 60, hint: 'Seil, Rolle auf Stirnhöhe, Hände am Ende neben die Ohren.' },
-    { name: 'SZ-Curls', sets: 3, min: 8, max: 12, inc: 2.5, rest: 60, hint: '' }
+    { name: 'SZ-Curls', sets: 3, min: 8, max: 12, inc: 2.5, rest: 60, hint: '' },
+    { name: 'Butterfly', sets: 3, min: 10, max: 15, inc: 2.5, rest: 60, hint: 'Maschine. Letzte Station der Runde, die Brust ist hier noch frisch.' }
   ]}
 };
+/* Planstand. Steigt die Zahl, wird ein schon angepasster Plan einmalig nachgezogen (siehe migratePlan) */
+const PLAN_REV = 2;
 /* Muskelgruppe und Zusatzinfos der Planübungen: bar = Langhantel (Scheibenrechner), warm = Aufwärmsätze */
 const PLAN_META = {
   'Kniebeuge': { group: 'Beine vorne', bar: true, warm: true }, 'Bankdrücken (KH)': { group: 'Brust', warm: true },
   'Schulterdrücken stehend': { group: 'Schultern', bar: true, warm: true }, 'Dips': { group: 'Brust' }, 'Beinpresse': { group: 'Beine vorne' },
-  'Wadenheben': { group: 'Waden' }, 'Kreuzheben': { group: 'Beine hinten & Gesäß', bar: true, warm: true }, 'Klimmzüge': { group: 'Rücken' },
+  'Kreuzheben': { group: 'Beine hinten & Gesäß', bar: true, warm: true }, 'Klimmzüge': { group: 'Rücken' },
   'Langhantelrudern': { group: 'Rücken', bar: true }, 'Beinbeuger-Curls': { group: 'Beine hinten & Gesäß' }, 'Seitheben': { group: 'Schultern' },
-  'Face Pulls': { group: 'Schultern' }, 'SZ-Curls': { group: 'Bizeps' }
+  'Face Pulls': { group: 'Schultern' }, 'SZ-Curls': { group: 'Bizeps' }, 'Butterfly': { group: 'Brust' }
 };
 for (const t of ['A', 'B']) PLAN[t].ex.forEach(e => Object.assign(e, PLAN_META[e.name] || {}));
 const GROUPS = ['Brust', 'Rücken', 'Schultern', 'Bizeps', 'Trizeps', 'Beine vorne', 'Beine hinten & Gesäß', 'Waden', 'Bauch'];
@@ -251,7 +267,6 @@ const CATALOG = [
   ['Schrägbankdrücken (Langhantel)', 'Brust', 3, 6, 10, 2.5, 150, { bar: true }],
   ['Schrägbankdrücken (Kurzhantel)', 'Brust', 3, 8, 10, 2, 120, { hint: HAND }],
   ['Brustpresse (Maschine)', 'Brust', 3, 8, 12, 5, 120, {}],
-  ['Butterfly', 'Brust', 3, 10, 15, 2.5, 90, {}],
   ['Latzug (Kabelzug)', 'Rücken', 3, 8, 12, 2.5, 120, {}],
   ['Pulldown mit gestreckten Armen am Seil (Kabelzug)', 'Rücken', 3, 10, 15, 2.5, 90, {}],
   ['Brustgestütztes T-Bar Rudern', 'Rücken', 3, 8, 10, 2.5, 120, {}],
@@ -284,6 +299,7 @@ const CATALOG = [
   ['Hüftheben / Hip Thrust (Langhantel / Maschine)', 'Beine hinten & Gesäß', 3, 8, 10, 5, 120, {}],
   ['Adduktoren (Maschine)', 'Beine hinten & Gesäß', 3, 12, 15, 5, 60, {}],
   ['Abduktoren (Maschine)', 'Beine hinten & Gesäß', 3, 12, 15, 5, 60, {}],
+  ['Wadenheben', 'Waden', 3, 10, 15, 5, 60, { hint: 'Unten kurz halten, oben voll hochdrücken.' }],
   ['Wadenheben sitzend (Maschine)', 'Waden', 3, 10, 15, 5, 60, {}],
   ['Crunches (Kabelzug / Maschine)', 'Bauch', 3, 12, 15, 2.5, 60, {}],
   ['Beinheben hängend', 'Bauch', 3, 10, 15, 0, 60, { bw: true, hint: 'Wird es leicht, Beine gestreckt.' }]
@@ -295,6 +311,23 @@ const EX = Object.fromEntries([...ALL_EX, ...CATALOG].map(e => [e.name, e]));
 const OV = {};
 const exInfo = name => { const b = EX[name] || { name, group: 'Eigene', sets: 3, min: 8, max: 12, inc: 2.5, rest: 90, hint: '' }; return OV[name] ? { ...b, ...OV[name] } : b; };
 const MAIN = ['Kniebeuge', 'Bankdrücken (KH)', 'Kreuzheben', 'Schulterdrücken stehend'];
+/* Körpergewicht-Verlauf [{date, kg}], wird von der App aus den Einstellungen befüllt */
+const BW = [];
+function bwAt(date) {
+  let v = null;
+  for (const x of BW) { if (x.date <= date) v = x.kg; else { if (v == null) v = x.kg; break; } }
+  return v;
+}
+/* Gewicht je Hantel eingetragen -> zählt fürs Volumen doppelt */
+const isDb = p => /je Hantel/.test(p.hint || '');
+/* Bewegte Last eines Satzes fürs Volumen: Kurzhanteln x2, bei Körpergewichtsübungen zählt das Körpergewicht mit */
+function loadKg(name, kg, date) {
+  const p = exInfo(name);
+  let x = kg || 0;
+  if (p.bw) x += bwAt(date) || 0;
+  if (isDb(p)) x *= 2;
+  return x;
+}
 
 const r2 = x => Math.round(x * 100) / 100;
 function num(v) {
@@ -342,7 +375,7 @@ function exHistory(sessions, name) {
       id: s.id, date: s.date, n: s.n, sets, W,
       top: Math.max(...sets.map(t => t.kg)),
       totalReps: reps.reduce((a, b) => a + b, 0),
-      volume: sets.reduce((a, t) => a + t.kg * t.reps, 0),
+      volume: sets.reduce((a, t) => a + loadKg(name, t.kg, s.date) * t.reps, 0),
       best: Math.max(...sets.map(t => e1rm(t.kg, t.reps))),
       success: sets.length >= p.sets && Math.min(...reps) >= p.max
     });
@@ -364,11 +397,22 @@ function targetFor(sessions, name) {
   return { status: 'hold', kg: last.W, last };
 }
 
-/* Vorschlag für Wiederholungen eines Satzes, wenn nur abgehakt wird */
+/* Vorschlag für Wiederholungen eines Satzes: gleiches Gewicht wie letztes Mal -> je Satz eine Wdh mehr (bis zum oberen Ende);
+   nach einer Steigerung unten in der Spanne starten; nach Deload oben */
 function suggestReps(t, p, i) {
   if (p.min === p.max) return p.max;
-  if (t.status === 'hold' && t.last && t.last.sets[i]) return Math.min(p.max, t.last.sets[i].reps);
+  const ls = t && t.last && t.last.sets;
+  if (t && t.status === 'hold' && ls && ls.length) { const prev = (ls[i] || ls[ls.length - 1]).reps; return Math.min(p.max, Math.max(p.min, prev + 1)); }
+  if (t && t.status === 'deload') return p.max;
   return p.min;
+}
+
+/* Grauer Vorschlag für Satz i: Gewicht aus dem letzten Satz dieser Einheit mit Gewicht, sonst das Zielgewicht */
+function setSuggestion(sets, i, t, p) {
+  let kg = null;
+  for (let j = i - 1; j >= 0; j--) { const v = num((sets[j] || {}).kg); if (v != null) { kg = v; break; } }
+  if (kg == null) kg = t && t.kg != null ? t.kg : (p.bw ? 0 : null);
+  return { kg, reps: suggestReps(t, p, i) };
 }
 
 /* Scheiben je Seite (Stange 20 kg, übliche Scheiben 20/10/5/2,5/1,25) */
@@ -401,7 +445,7 @@ function sessionStats(s) {
   let sets = 0, reps = 0, volume = 0;
   for (const ex of s.ex || []) for (const t of ex.sets || []) {
     const r = num(t.reps) ?? 0, kg = num(t.kg) ?? 0;
-    if (r > 0) { sets++; reps += r; volume += kg * r; }
+    if (r > 0) { sets++; reps += r; volume += loadKg(ex.name, kg, s.date) * r; }
   }
   return { sets, reps, volume };
 }
@@ -463,7 +507,7 @@ function toCSV(sessions) {
   return '﻿' + rows.map(r => r.map(c => { const v = String(c); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
 }
 
-if (typeof module !== 'undefined') module.exports = { OV, CATALOG, GROUPS, PLAN_NAMES, exInfo, platesPerSide, warmupSets, PLAN, EX, ALL_EX, MAIN, num, fmtKg, e1rm, isoWeek, weekKey, todayStr, exHistory, targetFor, suggestReps, nextSession, sessionStats, findPRs, slopePerWeek, weeklyTotals, toCSV, sortSessions, repsLabel };
+if (typeof module !== 'undefined') module.exports = { BW, bwAt, isDb, loadKg, setSuggestion, PLAN_REV, OV, CATALOG, GROUPS, PLAN_NAMES, exInfo, platesPerSide, warmupSets, PLAN, EX, ALL_EX, MAIN, num, fmtKg, e1rm, isoWeek, weekKey, todayStr, exHistory, targetFor, suggestReps, nextSession, sessionStats, findPRs, slopePerWeek, weeklyTotals, toCSV, sortSessions, repsLabel };
 
 </script>
 <script>
@@ -484,13 +528,32 @@ st.prefs = Object.assign({ plan: null, bw: [], notes: {} }, LS.get('kt.prefs') |
 function planList(t) { const p = st.prefs.plan && st.prefs.plan[t]; return p && p.length ? p : PLAN[t].ex.map(e => ({ name: e.name, sets: e.sets })); }
 const planNames = t => planList(t).map(x => x.name);
 const inPlan = name => planNames('A').includes(name) || planNames('B').includes(name);
+function syncBw() { BW.length = 0; for (const x of (st.prefs.bw || [])) if (x && x.kg > 0) BW.push({ date: x.date, kg: x.kg }); }
 function applyPrefs() {
+  syncBw();
   for (const k of Object.keys(OV)) delete OV[k];
   for (const [n, o] of Object.entries(st.prefs.targets || {})) OV[n] = { ...o };
   for (const t of ['A', 'B']) for (const x of planList(t)) { const base = (EX[x.name] || { sets: 3 }).sets; if (x.sets && x.sets !== base) OV[x.name] = { ...(OV[x.name] || {}), sets: x.sets }; }
 }
 function editPlan(t, fn) { const pl = { A: planList('A').map(x => ({ ...x })), B: planList('B').map(x => ({ ...x })) }; fn(pl[t]); st.prefs.plan = pl; applyPrefs(); savePrefs(); }
-function setBw(date, kg) { st.prefs.bw = (st.prefs.bw || []).filter(x => x.date !== date).concat([{ date, kg }]).sort((a, b) => a.date.localeCompare(b.date)); savePrefs(); }
+function setBw(date, kg) { st.prefs.bw = (st.prefs.bw || []).filter(x => x.date !== date).concat([{ date, kg }]).sort((a, b) => a.date.localeCompare(b.date)); syncBw(); savePrefs(); }
+/* Einmalig: Planumstellung (Nov. 2026) auch auf einen schon selbst angepassten Plan übertragen.
+   A: Waden raus, Beinpresse und Dips je 2 Sätze, Beinpresse zwischen Bank- und Schulterdrücken. B: Butterfly ans Ende. */
+function migratePlan() {
+  if ((st.prefs.planRev || 0) >= PLAN_REV) return;
+  const pl = st.prefs.plan;
+  if (pl && Array.isArray(pl.A) && Array.isArray(pl.B)) {
+    let a = pl.A.filter(x => x && x.name !== 'Wadenheben');
+    for (const x of a) if ((x.name === 'Beinpresse' || x.name === 'Dips') && x.sets > 2) x.sets = 2;
+    const order = ['Kniebeuge', 'Bankdrücken (KH)', 'Beinpresse', 'Schulterdrücken stehend', 'Dips'];
+    a = [...order.map(n => a.find(x => x.name === n)).filter(Boolean), ...a.filter(x => !order.includes(x.name))];
+    if (a.length) pl.A = a;
+    if (!pl.B.some(x => x && x.name === 'Butterfly')) pl.B.push({ name: 'Butterfly', sets: 3 });
+  }
+  /* Ein noch leerer Entwurf soll den neuen Plan zeigen */
+  if (st.draft && !hasEntries(st.draft)) st.draft.list = undefined;
+  st.prefs.planRev = PLAN_REV; applyPrefs(); savePrefs();
+}
 const lastBw = () => { const b = st.prefs.bw || []; return b.length ? b[b.length - 1].kg : null; };
 applyPrefs();
 
@@ -500,11 +563,12 @@ function boot() {
   st.draft = LS.get('kt.draft');
   st.sessions = LS.get('kt.sessions') || [];
   st.loaded = true;
+  migratePlan();
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { }
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => { });
   renderSync(); render();
 }
-function saveDraft() { st.draft.savedAt = Date.now(); LS.set('kt.draft', st.draft); }
+function saveDraft() { st.draft.savedAt = Date.now(); LS.set('kt.draft', st.draft); st.liveDirty = true; }
 function savePrefs() { st.prefs.savedAt = Date.now(); LS.set('kt.prefs', st.prefs); }
 async function clearDraft() { st.draft = null; LS.del('kt.draft'); }
 async function writeSession(s, id) {
@@ -545,11 +609,11 @@ $('#imp').addEventListener('change', async e => {
     st.sessions = next;
     if (d.prefs && typeof d.prefs === 'object') {
       const p = d.prefs;
-      if (p.plan && Array.isArray(p.plan.A) && Array.isArray(p.plan.B)) st.prefs.plan = p.plan;
+      if (p.plan && Array.isArray(p.plan.A) && Array.isArray(p.plan.B)) { st.prefs.plan = p.plan; st.prefs.planRev = p.planRev || 0; }
       if (Array.isArray(p.bw)) { const m = new Map((st.prefs.bw || []).map(x => [x.date, x])); p.bw.filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.date) && x.kg > 0).forEach(x => m.set(x.date, { date: x.date, kg: x.kg })); st.prefs.bw = [...m.values()].sort((a, b) => a.date.localeCompare(b.date)); }
       if (p.notes && typeof p.notes === 'object') st.prefs.notes = Object.assign({}, st.prefs.notes, p.notes);
       if (p.targets && typeof p.targets === 'object') st.prefs.targets = Object.assign({}, st.prefs.targets, p.targets);
-      applyPrefs(); savePrefs();
+      applyPrefs(); savePrefs(); migratePlan();
     }
     renderSync(); render();
     openModal(`<h2>Backup geladen</h2><p class="sub">${ok.length} Einheiten aus dem Backup übernommen, jetzt ${next.length} insgesamt.</p><button class="primary" data-close>Ok</button>`);
@@ -562,12 +626,21 @@ function letSleep() { try { if (wl) wl.release(); } catch (e) { } wl = null; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && st.draft && hasEntries(st.draft)) keepAwake(); });
 function unlockAudio() { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { } }
 onSetDone = () => { unlockAudio(); keepAwake(); };
-onTimerOver = () => { beep(); setTimeout(beep, 600); };
+onTimerOver = () => { beep(); setTimeout(beep, 600); flashScreen(); };
 onSaved = () => letSleep();
 function beep() {
   if (!actx) return;
   try { const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45); o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 0.5); } catch (e) { }
 }
+/* Pausenende: Bildschirm leuchtet weiß auf und zeigt den nächsten Satz. Tippen schließt sofort. */
+let flashT = null;
+function flashScreen() {
+  const f = $('#flash'), nx = st.live && st.live.next;
+  f.innerHTML = `<div><b>Pause vorbei</b>${nx ? `<span>${esc(nextText(nx))}</span>` : ''}</div>`;
+  f.classList.remove('on'); f.hidden = false; void f.offsetWidth; f.classList.add('on');
+  clearTimeout(flashT); flashT = setTimeout(() => { f.hidden = true; f.classList.remove('on'); }, 3000);
+}
+$('#flash').addEventListener('click', () => { clearTimeout(flashT); $('#flash').hidden = true; $('#flash').classList.remove('on'); });
 
 /* ---------- Hilfen ---------- */
 const plateSvg = tag => `<svg class="plate" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="var(--${tag})"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2"/><circle cx="50" cy="50" r="30" fill="rgba(0,0,0,.12)"/><circle cx="50" cy="50" r="15" fill="var(--steel)"/><circle cx="50" cy="50" r="7" fill="var(--bg)"/><text x="50" y="27" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="17">${tag}</text></svg>`;
@@ -591,10 +664,47 @@ const exHas = (obj, name) => ((obj.ex || {})[name]?.sets || []).some(r => (r && 
 function doneInfo(e, n) { const rows = (e.sets || []).slice(0, n).filter(r => r && r.done); return { count: rows.length, sets: rows.filter(r => num(r.reps) > 0).map(r => ({ kg: num(r.kg) ?? 0, reps: num(r.reps) })) }; }
 function newDraft() { const nx = nextSession(st.sessions); return { n: nx.n, tag: nx.tag, tagManual: false, start: null, ex: {}, note: '', savedAt: 0 }; }
 const hasEntries = d => d && Object.values(d.ex || {}).some(e => (e.sets || []).some(r => (r.reps ?? '') !== '' || (r.kg ?? '') !== '' || r.done));
+const doneCount = d => { let c = 0; for (const e of Object.values((d && d.ex) || {})) for (const r of (e.sets || [])) if (r && r.done) c++; return c; };
+const tgtOf = (name, edit) => edit ? { status: 'edit', kg: null, last: null } : targetFor(st.sessions, name);
+/* Vorschlag (grau) für einen Satz der laufenden bzw. bearbeiteten Einheit */
+function rowSug(obj, name, i, edit) { return setSuggestion(((obj.ex || {})[name] || {}).sets || [], i, tgtOf(name, edit), exInfo(name)); }
+const setCount = (obj, name) => { const p = exInfo(name), e = (obj.ex || {})[name] || {}; return e.n ?? Math.max(p.sets, (e.sets || []).length); };
+/* Nächster offener Satz: zuerst bei der Übung, deren Pause gerade läuft, dann der Reihe nach weiter */
+function nextUp(obj) {
+  const list = editorNames(obj), k = st.timer ? list.indexOf(st.timer.name) : -1;
+  const order = k > 0 ? [...list.slice(k), ...list.slice(0, k)] : list;
+  for (const name of order) {
+    const n = setCount(obj, name), sets = ((obj.ex || {})[name] || {}).sets || [];
+    for (let i = 0; i < n; i++) {
+      const r = sets[i] || {}; if (r.done) continue;
+      const sg = rowSug(obj, name, i, false);
+      return { name, i, n, kg: num(r.kg) ?? sg.kg, reps: num(r.reps) ?? sg.reps, bw: exInfo(name).bw };
+    }
+  }
+  return null;
+}
+function nextText(x) {
+  const kg = x.bw ? (x.kg > 0 ? `+${fmtKg(x.kg)} kg` : 'Körpergewicht') : (x.kg != null ? `${fmtKg(x.kg)} kg` : '');
+  return `${x.name} · Satz ${x.i + 1}/${x.n}${kg ? ` · ${kg} × ${x.reps}` : ` · ${x.reps} Wdh`}`;
+}
+/* Live-Werte der laufenden Einheit für die Leiste oben */
+function liveInfo(d) {
+  const out = { done: 0, total: 0, volume: 0, next: null };
+  if (!d) return out;
+  const date = todayStr();
+  for (const name of editorNames(d)) {
+    const n = setCount(d, name), sets = ((d.ex || {})[name] || {}).sets || [];
+    out.total += n;
+    for (let i = 0; i < n; i++) { const r = sets[i]; if (!r || !r.done) continue; out.done++; const reps = num(r.reps) ?? 0; if (reps > 0) out.volume += loadKg(name, num(r.kg) ?? 0, date) * reps; }
+  }
+  out.next = nextUp(d);
+  return out;
+}
 
 /* ---------- Render ---------- */
 let pendingTrain = false;
 function render() {
+  st.liveDirty = true;
   document.body.classList.toggle('tagB', currentTag() === 'B');
   const n = $('#note'); n.hidden = !st.note; n.textContent = st.note;
   document.querySelectorAll('nav a').forEach(a => a.setAttribute('aria-current', a.dataset.tab === st.tab ? 'page' : 'false'));
@@ -637,18 +747,20 @@ function renderTraining() {
 }
 function exCard(obj, name, k, mode) {
   const p = exInfo(name);
-  const t = mode === 'train' ? targetFor(st.sessions, name) : { status: 'edit', kg: null, last: null };
+  const t = tgtOf(name, mode !== 'train');
   const e = (obj.ex || {})[name] || {};
   const n = e.n ?? Math.max(p.sets, (e.sets || []).length);
   let rows = '', done = 0;
   for (let i = 0; i < n; i++) {
     const r = (e.sets || [])[i] || {};
-    const kg = r.kg ?? (t.kg != null ? fmtKg(t.kg) : (p.bw ? '0' : ''));
+    /* Eingetragenes steht schwarz im Feld, Vorschläge grau als Platzhalter: reintippen überschreibt, Haken übernimmt */
+    const sg = setSuggestion(e.sets || [], i, t, p);
+    const kgPh = sg.kg != null ? fmtKg(sg.kg) : 'kg', rpPh = mode === 'train' ? String(sg.reps) : repsLabel(p);
     if (r.done) done++;
     rows += `<div class="set${r.done ? ' done' : ''}" data-i="${i}"><span class="no">${i + 1}</span>
-      <label class="fld"><input class="kg" inputmode="decimal" enterkeyhint="next" autocomplete="off" aria-label="Satz ${i + 1} Gewicht in kg" value="${esc(kg)}" placeholder="${p.bw ? '0' : 'kg'}"></label>
+      <label class="fld"><input class="kg" inputmode="decimal" enterkeyhint="next" autocomplete="off" aria-label="Satz ${i + 1} Gewicht in kg" value="${esc(r.kg ?? '')}" placeholder="${esc(kgPh)}"></label>
       <span class="x">×</span>
-      <label class="fld"><input class="rp" inputmode="numeric" enterkeyhint="done" autocomplete="off" aria-label="Satz ${i + 1} Wiederholungen" value="${esc(r.reps ?? '')}" placeholder="${repsLabel(p)}"></label>
+      <label class="fld"><input class="rp" inputmode="numeric" enterkeyhint="done" autocomplete="off" aria-label="Satz ${i + 1} Wiederholungen" value="${esc(r.reps ?? '')}" placeholder="${esc(rpPh)}"></label>
       <button class="chk" aria-label="Satz ${i + 1} erledigt" aria-pressed="${r.done ? 'true' : 'false'}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button></div>`;
   }
   let tgt = '';
@@ -706,8 +818,17 @@ function onInput(ev) {
   if (!el.matches('.kg,.rp')) return;
   const sec = el.closest('.ex'), name = c.list[+sec.dataset.k], i = +el.closest('.set').dataset.i;
   const r = setRow(c.obj, name, i);
-  if (el.classList.contains('kg')) r.kg = el.value; else r.reps = el.value.replace(/[^0-9]/g, '');
-  if (!c.edit) { c.obj.start = c.obj.start || new Date().toISOString(); saveDraft(); }
+  if (el.classList.contains('kg')) { r.kg = el.value; refreshPh(sec, c, name); } else r.reps = el.value.replace(/[^0-9]/g, '');
+  if (!c.edit) saveDraft();
+}
+/* Gewicht geändert -> folgende, noch leere Sätze schlagen das neue Gewicht grau vor */
+function refreshPh(sec, c, name) {
+  sec.querySelectorAll('.set').forEach(row => { const sg = rowSug(c.obj, name, +row.dataset.i, c.edit); $('.kg', row).placeholder = sg.kg != null ? fmtKg(sg.kg) : 'kg'; });
+}
+/* Feld mit Wert antippen markiert alles, die nächste Eingabe ersetzt ihn */
+function onFocusIn(ev) {
+  const el = ev.target; if (!el.matches || !el.matches('.kg,.rp') || !el.value) return;
+  setTimeout(() => { try { el.setSelectionRange(0, el.value.length); } catch (e) { try { el.select(); } catch (e2) { } } }, 0);
 }
 function onClick(ev) {
   const el = ev.target.closest('button'); if (!el) return;
@@ -735,36 +856,39 @@ function onClick(ev) {
     const kgIn = $('.kg', row), rpIn = $('.rp', row);
     r.done = !r.done;
     if (r.done) {
-      if (!rpIn.value) { const t = c.edit ? { status: 'edit' } : targetFor(st.sessions, name); rpIn.value = String(suggestReps(t, p, i)); }
-      if (!kgIn.value) { const prev = [...sec.querySelectorAll('.set')].filter(rw => +rw.dataset.i < i).map(rw => $('.kg', rw).value).filter(Boolean).pop(); if (prev) kgIn.value = prev; }
-      r.reps = rpIn.value; if (r.kg == null || r.kg === '') r.kg = kgIn.value;
+      /* Haken ohne Eingabe = grauen Vorschlag übernehmen */
+      const sg = rowSug(c.obj, name, i, c.edit);
+      if (!rpIn.value) rpIn.value = String(sg.reps);
+      if (!kgIn.value && sg.kg != null) kgIn.value = fmtKg(sg.kg);
+      r.reps = rpIn.value; r.kg = kgIn.value;
       if (!c.edit) setDone(c, name);
     }
     refreshCard(sec, c, name, false);
     if (!c.edit) saveDraft(); updateProgress(c.root, c.obj);
   }
 }
-function setDone(c, name) { c.obj.start = c.obj.start || new Date().toISOString(); onSetDone(); startTimer(name, exInfo(name).rest); }
+/* Gesamtzeit startet mit dem ersten abgehakten Satz. Eine alte Startzeit (z. B. von einem liegengebliebenen Entwurf) wird ersetzt. */
+const STALE = 4 * 36e5;
+function setDone(c, name) {
+  const o = c.obj, now = Date.now();
+  if (!o.start || doneCount(o) <= 1 || now - new Date(o.start).getTime() > STALE) o.start = new Date(now).toISOString();
+  onSetDone(); startTimer(name, exInfo(name).rest);
+}
 /* Wiederholungen eingetragen -> Satz gilt als erledigt, Pause startet */
 function onChange(ev) {
   const el = ev.target; if (!el.classList || !el.matches('.kg,.rp')) return;
+  if (el.classList.contains('kg')) return;
   const c = ctxOf(el), sec = el.closest('.ex'), row = el.closest('.set');
   const name = c.list[+sec.dataset.k], r = setRow(c.obj, name, +row.dataset.i);
-  if (el.classList.contains('kg')) {
-    /* Gewicht gilt auch für die folgenden noch leeren Sätze */
-    if (num(el.value) == null) return;
-    sec.querySelectorAll('.set').forEach(rw => { const j = +rw.dataset.i, inp = $('.kg', rw); if (j > +row.dataset.i && !inp.value) { inp.value = el.value; setRow(c.obj, name, j).kg = el.value; } });
-    if (!c.edit) saveDraft(); return;
-  }
   if (r.done || !(num(r.reps) > 0)) return;
   const kgIn = $('.kg', row);
-  if (!kgIn.value) { const prev = [...sec.querySelectorAll('.set')].filter(rw => +rw.dataset.i < +row.dataset.i).map(rw => $('.kg', rw).value).filter(Boolean).pop(); if (prev) kgIn.value = prev; }
-  r.done = true; if (r.kg == null || r.kg === '') r.kg = kgIn.value;
+  if (!kgIn.value) { const sg = rowSug(c.obj, name, +row.dataset.i, c.edit); if (sg.kg != null) kgIn.value = fmtKg(sg.kg); }
+  r.done = true; r.kg = kgIn.value;
   if (!c.edit) setDone(c, name);
   refreshCard(sec, c, name, true);
   if (!c.edit) saveDraft(); updateProgress(c.root, c.obj);
 }
-for (const root of [view, editView]) { root.addEventListener('input', onInput); root.addEventListener('click', onClick); root.addEventListener('change', onChange); }
+for (const root of [view, editView]) { root.addEventListener('input', onInput); root.addEventListener('click', onClick); root.addEventListener('change', onChange); root.addEventListener('focusin', onFocusIn); }
 view.addEventListener('focusout', () => setTimeout(() => { if (pendingTrain && !view.contains(document.activeElement)) { pendingTrain = false; render(); } }, 0));
 
 /* ---------- Abschließen ---------- */
@@ -772,11 +896,11 @@ function buildSession(obj, isEdit, date) {
   const ex = []; let missingKg = 0;
   for (const name of editorNames(obj)) {
     const p = exInfo(name), e = obj.ex[name]; if (!e || !e.sets) continue;
-    const t = isEdit ? null : targetFor(st.sessions, name);
+    const t = tgtOf(name, isEdit);
     const sets = [];
-    e.sets.slice(0, e.n ?? e.sets.length).forEach(r => {
+    e.sets.slice(0, e.n ?? e.sets.length).forEach((r, i) => {
       if (!r) return; const reps = num(r.reps); if (!(reps > 0)) return;
-      let kg = num(r.kg); if (kg == null) kg = t && t.kg != null ? t.kg : (p.bw ? 0 : null);
+      let kg = num(r.kg); if (kg == null) kg = setSuggestion(e.sets, i, t, p).kg;
       if (kg == null) { missingKg++; kg = 0; }
       sets.push({ kg: Math.round(kg * 100) / 100, reps: Math.round(reps) });
     });
@@ -820,7 +944,7 @@ function openFinish(isEdit) {
         const nx = fin.tag === 'A' ? 'B' : 'A';
         openModal(`<h2>Gespeichert</h2><p class="sub">Einheit ${fin.n} · Tag ${fin.tag} · ${stt.sets} ${stt.sets === 1 ? 'Satz' : 'Sätze'} · ${fmtInt(stt.volume)} kg Volumen</p>
           ${prs.length ? `<ul class="prs">${prs.map(p => `<li><b>Bestwert</b> ${esc(p.name)}: ${esc(p.text)}</li>`).join('')}</ul>` : ''}
-          <p>Nächstes Mal: <strong>Tag ${nx} · ${esc(PLAN[nx].title)}</strong>. Die Zielgewichte sind schon eingetragen.</p>
+          <p>Nächstes Mal: <strong>Tag ${nx} · ${esc(PLAN[nx].title)}</strong>. Gewichte und Wiederholungen stehen dann schon grau als Vorschlag drin.</p>
           ${backupAge() == null || backupAge() > 7 ? `<p class="warnbox">${backupAge() == null ? 'Du hast noch kein Backup gesichert.' : `Dein letztes Backup ist ${backupAge()} Tage alt.`} Deine Daten liegen nur auf diesem Handy.</p><button class="ghost" style="width:100%" id="bkNow">Backup jetzt sichern</button>` : ''}
           <button class="primary" data-close>Fertig</button>`);
         const bn = $('#bkNow'); if (bn) bn.addEventListener('click', () => backup().then(() => closeModal()));
@@ -840,28 +964,44 @@ $('#modal').addEventListener('click', e => { if (e.target.id === 'modal' || e.ta
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
 
 /* ---------- Pausentimer ---------- */
-function startTimer(name, secs) { st.timer = { name, end: Date.now() + secs * 1000, total: secs * 1000 }; showTimer(); }
-function showTimer() { tick(); }
+function startTimer(name, secs) { st.timer = { name, end: Date.now() + secs * 1000, total: secs * 1000 }; st.liveDirty = true; showTimer(); }
+function showTimer() { st.liveDirty = true; tick(); }
 function fmtClock(ms) { const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; }
-/* Leiste unten: Gesamtzeit der Einheit läuft still mit, Satzpause zählt nach jedem erledigten Satz herunter */
+/* Leiste oben: Satzpause zählt nach jedem erledigten Satz herunter, darunter der nächste Satz und Dauer · Sätze · Volumen.
+   Sie läuft erst ab dem ersten abgehakten Satz und blendet eine Startzeit aus, die älter als 6 Stunden ist. */
 function tick() {
-  const el = $('#timer'), d = st.draft, active = !!(d && d.start && hasEntries(d));
-  if (st.timer && st.timer.end - Date.now() < -10000) st.timer = null;
-  if (!active && !st.timer) { el.hidden = true; return; }
-  el.hidden = false;
-  $('#ttot').textContent = active ? fmtClock(Date.now() - new Date(d.start)) : '–';
+  const el = $('#timer'), d = st.draft, now = Date.now();
+  const t0 = d && d.start ? new Date(d.start).getTime() : 0;
+  const active = !!(t0 && doneCount(d) > 0 && now - t0 < 6 * 36e5);
+  if (st.timer && st.timer.end - now < -10000) { st.timer = null; st.liveDirty = true; }
+  const show = active || !!st.timer;
+  if (el.hidden === show) { el.hidden = !show; document.body.classList.toggle('hasTimer', show); }
+  if (!show) return;
+  if (st.liveDirty || !st.live) { st.live = liveInfo(d); st.liveDirty = false; }
+  const L = st.live;
+  $('#tstat').textContent = [active ? `Dauer ${fmtClock(now - t0)}` : null, `${L.done} von ${L.total} Sätzen`, `${fmtInt(L.volume)} kg Volumen`].filter(Boolean).join(' · ');
   el.classList.toggle('norest', !st.timer);
-  if (!st.timer) { el.classList.remove('over'); $('#tbar').style.width = '0'; return; }
-  const left = st.timer.end - Date.now(), s = Math.max(0, Math.ceil(left / 1000));
-  $('#tt').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  $('#tl').textContent = left > 0 ? `Pause · ${st.timer.name}` : 'Pause vorbei';
-  $('#tbar').style.width = Math.max(0, left / st.timer.total * 100) + '%';
-  el.classList.toggle('over', left <= 0);
-  if (left <= 0 && !st.timer.beeped) { st.timer.beeped = true; onTimerOver(); }
+  if (!st.timer) { el.classList.remove('over'); $('#tbar').style.width = '0'; }
+  else {
+    const left = st.timer.end - now, s = Math.max(0, Math.ceil(left / 1000));
+    $('#tt').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    $('#tl').textContent = left > 0 ? `Pause · ${st.timer.name}` : 'Pause vorbei – weiter geht’s';
+    $('#tnext').textContent = L.next ? `Danach: ${nextText(L.next)}` : 'Alle Sätze erledigt – Einheit abschließen';
+    $('#tbar').style.width = Math.max(0, left / st.timer.total * 100) + '%';
+    el.classList.toggle('over', left <= 0);
+    if (left <= 0 && !st.timer.beeped) { st.timer.beeped = true; onTimerOver(); }
+  }
+  /* Höhe der Leiste merken, damit Inhalt und Dialoge darunter beginnen */
+  const h = el.offsetHeight; if (h && h !== st.th) { st.th = h; document.documentElement.style.setProperty('--th', h + 'px'); }
 }
 setInterval(tick, 250);
 $('#tplus').addEventListener('click', () => { if (st.timer) { st.timer.end = Math.max(Date.now(), st.timer.end) + 30000; st.timer.total += 30000; st.timer.beeped = false; tick(); } });
 $('#tstop').addEventListener('click', () => { st.timer = null; showTimer(); });
+/* iOS: Bei offener Tastatur verschiebt sich der sichtbare Bereich. Die Leiste wandert mit und bleibt oben sichtbar. */
+if (window.visualViewport) {
+  const vv = window.visualViewport, pin = () => { const y = Math.max(0, Math.round(vv.offsetTop)); $('#timer').style.transform = y ? `translateY(${y}px)` : ''; };
+  vv.addEventListener('resize', pin); vv.addEventListener('scroll', pin);
+}
 
 /* ---------- Übungen ersetzen, hinzufügen, entfernen (gilt nur für diese Einheit) ---------- */
 const ctxObj = edit => edit ? st.edit : trainObj();
@@ -1254,11 +1394,14 @@ function renderPlan() {
   <li>Zweimal in Folge am gleichen Gewicht gescheitert: die App schlägt 10 % weniger vor, dann neu hocharbeiten.</li>
   <li>Alle 6–8 Wochen oder bei Dauermüdigkeit eine Deload-Woche mit halber Satzzahl und ca. 10 % weniger Gewicht.</li>
   <li>Aufwärmen: 5 Min. locker, dann Aufwärmsätze vor der ersten Übung. Bei den Grundübungen stehen sie direkt an der Übung.</li>
-  <li>Seitheben, Face Pulls und SZ-Curls im Wechsel mit kurzen Pausen, das spart Zeit.</li></ul>
+  <li>Seitheben, Face Pulls, SZ-Curls und Butterfly als Runde im Wechsel mit kurzen Pausen, das spart Zeit.</li></ul>
   <h2>Anpassen im Training</h2>
   <ul class="rules"><li>„Übung ändern“ ersetzt eine Übung, lässt sie heute weg oder hinterlegt eine Notiz. „+ Übung hinzufügen“ ergänzt eine. Das gilt nur für die laufende Einheit, außer du setzt den Haken „Auch dauerhaft im Plan“.</li>
   <li>Mit − und + stellst du die Satzzahl für heute ein. Dauerhaft geht das hier über „Plan bearbeiten“.</li>
-  <li>Trägst du die Wiederholungen ein, gilt der Satz als erledigt und die Pause startet. Bei genau erreichter Vorgabe reicht ein Tipp auf den Haken.</li></ul>
+  <li>Graue Zahlen sind Vorschläge: Gewicht aus der Steigerung, Wiederholungen eine mehr als letztes Mal. Passt der Satz so, reicht ein Tipp auf den Haken.</li>
+  <li>Weicht ein Satz ab, tippst du einfach die echte Zahl ein. Änderst du das Gewicht, schlagen die folgenden Sätze automatisch das neue Gewicht vor.</li>
+  <li>Trägst du die Wiederholungen ein, gilt der Satz als erledigt und die Pause startet. Die Leiste oben zeigt die Pause und den nächsten Satz, am Ende leuchtet der Bildschirm kurz auf.</li>
+  <li>Aufwärmsätze nicht eintragen: Die App rechnet mit dem leichtesten eingetragenen Satz als Arbeitsgewicht.</li></ul>
   <details class="cat"><summary>Übungskatalog (${CATALOG.length} weitere Übungen)</summary>${GROUPS.map(g => { const l = CATALOG.filter(e => e.group === g); return l.length ? `<div class="pg">${esc(g)}</div><div class="pl">${l.map(e => `<div class="r"><b>${esc(e.name)}</b><span class="q">${e.sets} × ${repsLabel(e)}</span></div>`).join('')}</div>` : ''; }).join('')}</details>`;
 }
 view.addEventListener('click', e => {
