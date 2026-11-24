@@ -360,7 +360,7 @@ const fmtDate = (ds, wd = true) => new Date(ds + 'T12:00:00').toLocaleDateString
 
 const sortSessions = ss => [...ss].sort((a, b) => (a.date + (a.end || '')).localeCompare(b.date + (b.end || '')) || (a.n || 0) - (b.n || 0));
 
-/* Verlauf einer Übung: eine Zeile pro Einheit mit Arbeitsgewicht W (kleinstes Satzgewicht) */
+/* Verlauf einer Übung: eine Zeile pro Einheit mit W (kleinstes Satzgewicht, Basis für feste Wdh) und top (schwerster Satz) */
 function exHistory(sessions, name) {
   const p = exInfo(name);
   const out = [];
@@ -383,36 +383,59 @@ function exHistory(sessions, name) {
   return out;
 }
 
-/* Zielgewicht für die nächste Einheit */
+/* Ziel für die nächste Einheit.
+   Feste Wdh (z. B. 5er): alle Sätze gleich schwer, mehr Gewicht erst, wenn alle Sätze geschafft sind.
+   Wdh-Spanne: jeder Satz für sich (planSet). So passen gleich schwere Sätze genauso wie ein schwerer
+   Einstiegssatz mit leichteren Folgesätzen. kg ist dann das schwerste geplante Gewicht (für Aufwärmen und Kopfzeile). */
 function targetFor(sessions, name) {
   const p = exInfo(name);
   const h = exHistory(sessions, name);
   if (!h.length) return { status: 'new', kg: null, last: null };
-  const last = h[h.length - 1], prev = h[h.length - 2];
-  if (!last.success && prev && !prev.success && prev.W === last.W && last.W > 0) {
-    const step = p.inc || 2.5;
-    return { status: 'deload', kg: r2(Math.floor(last.W * 0.9 / step) * step), last };
+  const last = h[h.length - 1], prev = h[h.length - 2], step = p.inc || 2.5;
+  if (p.min === p.max) {
+    if (!last.success && prev && !prev.success && prev.W === last.W && last.W > 0) return { status: 'deload', kg: r2(Math.floor(last.W * 0.9 / step) * step), last, fixed: true };
+    if (last.success) return { status: 'up', kg: r2(last.W + p.inc), last, fixed: true };
+    return { status: 'hold', kg: last.W, last, fixed: true };
   }
-  if (last.success) return { status: 'up', kg: r2(last.W + p.inc), last };
-  return { status: 'hold', kg: last.W, last };
+  /* Stillstand: zweimal das Ziel verfehlt und in keinem Satz mehr Gewicht oder mehr Wdh als davor -> 10 % runter */
+  const stalled = !!prev && !last.success && !prev.success && last.top > 0 && last.sets.every((s, i) => {
+    const q = prev.sets[i] || prev.sets[prev.sets.length - 1]; return s.kg < q.kg || (s.kg === q.kg && s.reps <= q.reps);
+  });
+  const t = { status: stalled ? 'deload' : 'hold', kg: null, last, step };
+  const n = Math.max(p.sets, last.sets.length);
+  let ups = 0, top = null;
+  for (let i = 0; i < n; i++) { const ps = planSet(t, p, i); if (ps.up) ups++; if (ps.kg != null && (top == null || ps.kg > top)) top = ps.kg; }
+  if (!stalled && ups) t.status = 'up';
+  t.ups = ups; t.n = n; t.kg = top;
+  return t;
 }
 
-/* Vorschlag für Wiederholungen eines Satzes: gleiches Gewicht wie letztes Mal -> je Satz eine Wdh mehr (bis zum oberen Ende);
-   nach einer Steigerung unten in der Spanne starten; nach Deload oben */
+/* Wdh-Vorschlag ohne Vorgeschichte: unteres Ende der Spanne, bei festen Wdh genau diese */
 function suggestReps(t, p, i) {
-  if (p.min === p.max) return p.max;
-  const ls = t && t.last && t.last.sets;
-  if (t && t.status === 'hold' && ls && ls.length) { const prev = (ls[i] || ls[ls.length - 1]).reps; return Math.min(p.max, Math.max(p.min, prev + 1)); }
-  if (t && t.status === 'deload') return p.max;
-  return p.min;
+  return p.min === p.max ? p.max : p.min;
 }
 
-/* Grauer Vorschlag für Satz i: Gewicht aus dem letzten Satz dieser Einheit mit Gewicht, sonst das Zielgewicht */
+/* Plan für Satz i aus dem letzten Mal im selben Satz (ohne Eingaben von heute):
+   oberes Ende geschafft -> mehr Gewicht und unten in der Spanne starten, sonst gleiches Gewicht und eine Wdh mehr */
+function planSet(t, p, i) {
+  if (!t || !t.last || t.status === 'new' || t.status === 'edit') return { kg: t && t.kg != null ? t.kg : (p.bw ? 0 : null), reps: suggestReps(t, p, i) };
+  if (t.fixed) return { kg: t.kg, reps: p.max };
+  const ls = t.last.sets, ref = ls[i] || ls[ls.length - 1];
+  if (t.status === 'deload') { const step = t.step || 2.5; return { kg: r2(Math.floor(ref.kg * 0.9 / step) * step), reps: p.max }; }
+  if (ref.reps >= p.max) return { kg: r2(ref.kg + p.inc), reps: p.min, up: true };
+  return { kg: ref.kg, reps: Math.min(p.max, Math.max(p.min, ref.reps + 1)) };
+}
+
+/* Grauer Vorschlag für Satz i: der Plan aus dem letzten Mal. Hast du heute einen davor liegenden, gleich schwer
+   geplanten Satz mit anderem Gewicht gemacht, zieht dieser Satz mit. Bei gleich schweren Sätzen folgen also alle,
+   bei schwerem Einstieg und leichteren Folgesätzen bleiben die Folgesätze bei ihrem eigenen Plan. */
 function setSuggestion(sets, i, t, p) {
-  let kg = null;
-  for (let j = i - 1; j >= 0; j--) { const v = num((sets[j] || {}).kg); if (v != null) { kg = v; break; } }
-  if (kg == null) kg = t && t.kg != null ? t.kg : (p.bw ? 0 : null);
-  return { kg, reps: suggestReps(t, p, i) };
+  const base = planSet(t, p, i);
+  for (let j = i - 1; j >= 0; j--) {
+    const v = num((sets[j] || {}).kg); if (v == null) continue;
+    if (planSet(t, p, j).kg === base.kg) return { kg: v, reps: base.reps };
+  }
+  return { kg: base.kg, reps: base.reps };
 }
 
 /* Scheiben je Seite (Stange 20 kg, übliche Scheiben 20/10/5/2,5/1,25) */
@@ -472,6 +495,9 @@ function findPRs(sessions, s) {
   return prs;
 }
 
+/* Statistik: Arbeitsgewicht = schwerster Satz der Einheit (bei gleich schweren Sätzen identisch) */
+const statHistory = (sessions, name) => exHistory(sessions, name).map(r => ({ ...r, W: r.top }));
+
 /* Steigung in kg pro Woche (lineare Regression über das Arbeitsgewicht) */
 function slopePerWeek(h) {
   if (h.length < 3) return null;
@@ -507,7 +533,7 @@ function toCSV(sessions) {
   return '﻿' + rows.map(r => r.map(c => { const v = String(c); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
 }
 
-if (typeof module !== 'undefined') module.exports = { BW, bwAt, isDb, loadKg, setSuggestion, PLAN_REV, OV, CATALOG, GROUPS, PLAN_NAMES, exInfo, platesPerSide, warmupSets, PLAN, EX, ALL_EX, MAIN, num, fmtKg, e1rm, isoWeek, weekKey, todayStr, exHistory, targetFor, suggestReps, nextSession, sessionStats, findPRs, slopePerWeek, weeklyTotals, toCSV, sortSessions, repsLabel };
+if (typeof module !== 'undefined') module.exports = { BW, bwAt, isDb, loadKg, setSuggestion, planSet, PLAN_REV, OV, CATALOG, GROUPS, PLAN_NAMES, exInfo, platesPerSide, warmupSets, PLAN, EX, ALL_EX, MAIN, num, fmtKg, e1rm, isoWeek, weekKey, todayStr, exHistory, targetFor, suggestReps, nextSession, sessionStats, findPRs, slopePerWeek, weeklyTotals, toCSV, sortSessions, repsLabel };
 
 </script>
 <script>
@@ -766,7 +792,8 @@ function exCard(obj, name, k, mode) {
   let tgt = '';
   if (mode === 'train') {
     const unit = p.bw ? (t.kg ? `+${fmtKg(t.kg)} kg` : 'Körpergewicht') : `${fmtKg(t.kg)} kg`;
-    const chip = { up: `<span class="chip good">↑ +${fmtKg(p.inc)} kg steigern</span>`, hold: '<span class="chip">= Gewicht halten</span>', deload: '<span class="chip warn">↓ Deload −10 %</span>', new: '<span class="chip">Startgewicht wählen</span>' }[t.status];
+    const upTxt = t.ups && t.n && t.ups < t.n ? `↑ ${t.ups} ${t.ups === 1 ? 'Satz' : 'Sätze'} +${fmtKg(p.inc)} kg` : `↑ +${fmtKg(p.inc)} kg steigern`;
+    const chip = { up: `<span class="chip good">${upTxt}</span>`, hold: `<span class="chip">${t.fixed ? '= Gewicht halten' : '= Wdh steigern'}</span>`, deload: '<span class="chip warn">↓ Deload −10 %</span>', new: '<span class="chip">Startgewicht wählen</span>' }[t.status];
     tgt = `<div class="tgt">${t.kg != null ? `<b>${unit}</b>` : ''}${chip}</div>`;
   }
   const last = t.last ? `<div class="last">Letztes Mal: ${esc(setsText(t.last.sets, p.bw))}</div>` : '';
@@ -1309,7 +1336,7 @@ function renderStats() {
   </div>
   <h2>Grundübungen</h2><div class="lifts">`;
   for (const name of MAIN) {
-    const h = exHistory(ss, name);
+    const h = statHistory(ss, name);
     if (!h.length) { html += `<button class="lift" data-ex="${esc(name)}"><span><span class="n">${esc(name)}</span><br><span class="s">noch nicht trainiert</span></span><span class="k">–</span><span></span></button>`; continue; }
     const d = h[h.length - 1].W - h[0].W, best = Math.max(...h.map(r => r.best));
     html += `<button class="lift" data-ex="${esc(name)}"><span><span class="n">${esc(name)}</span><br><span class="s">${d > 0 ? `<span class="d up">↑ +${fmtKg(d)} kg</span> seit Start` : d < 0 ? `↓ ${fmtKg(d)} kg seit Start` : 'gleich wie zum Start'} · bestes e1RM ${fmtKg(Math.round(best * 10) / 10)} kg${exInfo(name).bar && lastBw() ? ` · ${fmtKg(Math.round(best / lastBw() * 100) / 100)} × Körpergewicht` : ''}</span></span><span class="k">${fmtKg(h[h.length - 1].W)} kg</span>${spark(h)}</button>`;
@@ -1327,7 +1354,7 @@ function renderStats() {
 }
 function renderDetail() {
   const box = $('#exDetail'); if (!box) return;
-  const name = st.statEx, p = exInfo(name), h = exHistory(st.sessions, name);
+  const name = st.statEx, p = exInfo(name), h = statHistory(st.sessions, name);
   if (!h.length) { box.innerHTML = `<div class="empty"><b>${esc(name)}</b>Für diese Übung ist noch nichts gespeichert.</div>`; return; }
   const lastR = h[h.length - 1], d = lastR.W - h[0].W, best = Math.max(...h.map(r => r.best)), sl = slopePerWeek(h);
   const bwOnly = h.every(r => r.W === 0), showE = h.some(r => r.best > 0);
@@ -1338,7 +1365,7 @@ function renderDetail() {
     <div class="tile"><div class="l">Bestes e1RM</div><div class="v">${showE ? fmtKg(Math.round(best * 10) / 10) + ' kg' : '–'}</div><div class="d">geschätztes 1-Wdh-Maximum</div></div>
     <div class="tile"><div class="l">Trend</div><div class="v">${sl == null ? '–' : (sl >= 0 ? '+' : '') + fmtKg(Math.round(sl * 10) / 10) + ' kg'}</div><div class="d">${sl == null ? 'ab 3 Einheiten' : 'pro Woche, ' + h.length + ' Einheiten'}</div></div>
   </div>
-  ${figHtml(showE ? 'Gewicht und e1RM' : 'Arbeitsgewicht', 'Arbeitsgewicht = leichtester Satz der Einheit' + (p.bw ? ', Zusatzgewicht' : '') + (p.name.includes('KH') || name === 'Seitheben' ? ', je Hantel' : ''), showE ? '<div class="legend"><span><i style="background:var(--s1)"></i>Arbeitsgewicht</span><span><i style="background:var(--s2)"></i>e1RM</span></div>' : '', 'fW')}
+  ${figHtml(showE ? 'Gewicht und e1RM' : 'Arbeitsgewicht', 'Arbeitsgewicht = schwerster Satz der Einheit' + (p.bw ? ', Zusatzgewicht' : '') + (p.name.includes('KH') || name === 'Seitheben' ? ', je Hantel' : ''), showE ? '<div class="legend"><span><i style="background:var(--s1)"></i>Arbeitsgewicht</span><span><i style="background:var(--s2)"></i>e1RM</span></div>' : '', 'fW')}
   ${figHtml('Wiederholungen pro Satz', 'Jeder Punkt ist ein Satz', `<div class="legend"><span><i class="band"></i>Zielbereich ${repsLabel(p)} Wdh</span></div>`, 'fR')}
   ${bwOnly ? figHtml('Wiederholungen gesamt', 'Summe aller Sätze je Einheit', '', 'fV') : figHtml('Volumen je Einheit', 'Gewicht × Wiederholungen', '', 'fV')}
   <div class="card"><h3>Alle Einheiten</h3><table class="data"><thead><tr><th>Datum</th><th class="r">Sätze</th><th class="r">e1RM</th></tr></thead><tbody>
@@ -1389,19 +1416,19 @@ function renderPlan() {
   ${ed && st.prefs.plan ? '<button class="linkbtn" id="planReset" style="display:block;margin:18px auto 0">Standardplan wiederherstellen</button>' : ''}
   <h2>Regeln</h2><ul class="rules">
   <li>Start: Gewichte so wählen, dass im letzten Satz noch 2–3 Wdh im Tank wären. Kniebeuge und Kreuzheben die ersten 2–3 Wochen bewusst leicht, Fokus Technik.</li>
-  <li>Feste Wiederholungen (5): alle Sätze geschafft, dann nächstes Mal + Steigerung. Sonst gleiches Gewicht nochmal.</li>
-  <li>Wiederholungsspanne: Gewicht halten, bis alle Sätze das obere Ende schaffen. Dann erhöhen und wieder unten in der Spanne starten.</li>
-  <li>Zweimal in Folge am gleichen Gewicht gescheitert: die App schlägt 10 % weniger vor, dann neu hocharbeiten.</li>
+  <li>Feste Wiederholungen (5): alle Sätze gleich schwer. Alle geschafft, dann nächstes Mal + Steigerung, sonst gleiches Gewicht nochmal.</li>
+  <li>Wiederholungsspanne: Jeder Satz wird für sich gesteigert. Schaffst du in einem Satz das obere Ende, steht dort nächstes Mal mehr Gewicht, sonst gleiches Gewicht mit einer Wdh mehr. So geht beides: alle Sätze gleich schwer oder ein schwerer Einstiegssatz mit leichteren Folgesätzen.</li>
+  <li>Zweimal in Folge das Ziel verfehlt und in keinem Satz besser als davor: die App schlägt 10 % weniger vor, dann neu hocharbeiten.</li>
   <li>Alle 6–8 Wochen oder bei Dauermüdigkeit eine Deload-Woche mit halber Satzzahl und ca. 10 % weniger Gewicht.</li>
   <li>Aufwärmen: 5 Min. locker, dann Aufwärmsätze vor der ersten Übung. Bei den Grundübungen stehen sie direkt an der Übung.</li>
   <li>Seitheben, Face Pulls, SZ-Curls und Butterfly als Runde im Wechsel mit kurzen Pausen, das spart Zeit.</li></ul>
   <h2>Anpassen im Training</h2>
   <ul class="rules"><li>„Übung ändern“ ersetzt eine Übung, lässt sie heute weg oder hinterlegt eine Notiz. „+ Übung hinzufügen“ ergänzt eine. Das gilt nur für die laufende Einheit, außer du setzt den Haken „Auch dauerhaft im Plan“.</li>
   <li>Mit − und + stellst du die Satzzahl für heute ein. Dauerhaft geht das hier über „Plan bearbeiten“.</li>
-  <li>Graue Zahlen sind Vorschläge: Gewicht aus der Steigerung, Wiederholungen eine mehr als letztes Mal. Passt der Satz so, reicht ein Tipp auf den Haken.</li>
-  <li>Weicht ein Satz ab, tippst du einfach die echte Zahl ein. Änderst du das Gewicht, schlagen die folgenden Sätze automatisch das neue Gewicht vor.</li>
+  <li>Graue Zahlen sind Vorschläge, Satz für Satz aus dem letzten Mal: eine Wdh mehr oder, wenn du oben angekommen warst, mehr Gewicht. Passt der Satz so, reicht ein Tipp auf den Haken.</li>
+  <li>Weicht ein Satz ab, tippst du einfach die echte Zahl ein. Änderst du das Gewicht, übernehmen die folgenden Sätze, die gleich schwer geplant waren, das neue Gewicht.</li>
   <li>Trägst du die Wiederholungen ein, gilt der Satz als erledigt und die Pause startet. Die Leiste oben zeigt die Pause und den nächsten Satz, am Ende leuchtet der Bildschirm kurz auf.</li>
-  <li>Aufwärmsätze nicht eintragen: Die App rechnet mit dem leichtesten eingetragenen Satz als Arbeitsgewicht.</li></ul>
+  <li>Aufwärmsätze nicht eintragen, sonst hält die App sie für Arbeitssätze.</li></ul>
   <details class="cat"><summary>Übungskatalog (${CATALOG.length} weitere Übungen)</summary>${GROUPS.map(g => { const l = CATALOG.filter(e => e.group === g); return l.length ? `<div class="pg">${esc(g)}</div><div class="pl">${l.map(e => `<div class="r"><b>${esc(e.name)}</b><span class="q">${e.sets} × ${repsLabel(e)}</span></div>`).join('')}</div>` : ''; }).join('')}</details>`;
 }
 view.addEventListener('click', e => {
